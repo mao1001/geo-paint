@@ -34,6 +34,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
 
+    //-----------------------//
+    //   O V E R R I D E S   //
+    //-----------------------//
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,16 +75,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setCompassEnabled(true);
-
-
-
-        // Add a marker in Sydney and move the camera
-//        LatLng sydney = new LatLng(-34, 151);
-//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
     @Override
@@ -97,29 +93,61 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onStop();
     }
 
+    /**
+     * Override for GoogleApiClient.ConnectionCallbacks
+     * @param bundle
+     */
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(TAG, "onConnected");
-        requestPermission(Manifest.permission.ACCESS_FINE_LOCATION);
-
-        // Add a marker in Sydney and move the camera
-//        LatLng sydney = new LatLng(-34, 151);
-//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        //Checks if the permission is already in manifest. Will also request it in 6.0+
+        if (requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            //This should only run for under 6.0
+            moveToCurrentLocation();
+        }
     }
 
+    /**
+     * Override for GoogleApiClient.ConnectionCallbacks
+     * @param connectionResult
+     */
     @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    public void onConnectionSuspended(int i) {}
 
-    }
-
-
+    /**
+     * Override for GoogleApiClient.OnConnectionFailedListener
+     * @param connectionResult
+     */
     @Override
-    public void onConnectionSuspended(int i) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {}
 
+    /**
+     * Override for ActivityCompat.OnRequestPermissionsResultCallback
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d(TAG, "onRequestPermissionResult");
+
+        switch (requestCode) {
+            case PERMISSION_REQUEST_FINE_LOCATION: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    moveToCurrentLocation();
+                } else {
+
+                }
+            }
+        }
     }
 
-    private void requestPermission(String permission) {
+    //-----------------------------------//
+    //   P R I V A T E   M E T H O D S   //
+    //-----------------------------------//
+
+    private boolean requestPermission(String permission) {
         if (ContextCompat.checkSelfPermission(this,
                 permission)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -144,19 +172,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // app-defined int constant. The callback method gets the
                 // result of the request.
             }
-        } else {
-            moveToCurrentLocation();
-        }
-    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d(TAG, "onRequestPermissionResult");
-
-        if (requestCode == PERMISSION_REQUEST_FINE_LOCATION) {
-            Log.v(TAG, "Permission granted");
-            moveToCurrentLocation();
+            return false;
         }
+
+        return true;
     }
 
     private void moveToCurrentLocation() {
