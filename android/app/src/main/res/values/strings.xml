@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Geopaint</string>
     <string name="title_activity_maps">Map</string>
+
+
+    <string name="action_pick_color">Pick color</string>
 </resources>
