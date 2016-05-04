@@ -20,7 +20,7 @@ public class Drawer {
     public Drawer() {
         locationListener = new CustomLocationListener();
     }
-    
+
 
     public LocationListener getLocationListener() {
         return locationListener;
@@ -30,8 +30,8 @@ public class Drawer {
         return drawing;
     }
 
-    public void toggleDrawingStatus() {
-        drawing = !drawing;
+    public void setDrawingStatus(boolean newStatus) {
+        drawing = newStatus;
     }
 
     private static class CustomLocationListener implements LocationListener {

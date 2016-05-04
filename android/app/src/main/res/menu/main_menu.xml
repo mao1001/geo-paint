@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_toggle_pen"
+        android:icon="@drawable/ic_smoking_rooms_white_24dp"
+        android:title="@string/action_brush_off_title"
+        app:showAsAction="ifRoom"/>
+
+    <item
         android:id="@+id/action_pick_color"
         android:icon="@drawable/ic_palette_white_24dp"
         android:title="@string/action_pick_color"

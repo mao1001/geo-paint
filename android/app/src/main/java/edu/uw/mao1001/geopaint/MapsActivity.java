@@ -12,6 +12,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -65,6 +67,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getTitle().toString()) {
+            case "Pick color":
+
+                break;
+            case "Turn on brush":
+                startDrawing();
+                item.setTitle(getString(R.string.action_brush_on_title));
+                item.setIcon(R.drawable.ic_smoke_free_white_24dp);
+                break;
+            case "Turn off brush":
+                stopDrawing();
+                item.setTitle(getString(R.string.action_brush_off_title));
+                item.setIcon(R.drawable.ic_smoking_rooms_white_24dp);
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     /**
      * Manipulates the map once available.
@@ -107,19 +129,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Checks if the permission is already in manifest. Will also request it in 6.0+
         if (requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
             //This should only run for under 6.0
-//            moveToCurrentLocation();
-
-            startLocationUpdates();
         }
 
     }
 
-    protected void startLocationUpdates() {
+    protected void stopDrawing() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, drawer.getLocationListener());
+        drawer.setDrawingStatus(false);
+    }
+
+    protected void startDrawing() {
         try {
             LocationRequest locationRequest = LocationRequest.create()
                     .setInterval(10 * 1000)
                     .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, drawer.getLocationListener());
+            drawer.setDrawingStatus(true);
         } catch (SecurityException e) {
             Log.e(TAG, "Failed to start location updates " + e.getLocalizedMessage());
         }
