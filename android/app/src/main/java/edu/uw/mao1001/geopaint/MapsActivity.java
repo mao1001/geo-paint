@@ -1,10 +1,7 @@
 package edu.uw.mao1001.geopaint;
 
-import android.Manifest;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -13,26 +10,16 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ActivityCompat.OnRequestPermissionsResultCallback {
+public class MapsActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final String TAG = "MapsActivity";
 
     private static Drawer drawer;
-
-    private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
@@ -40,6 +27,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     //-----------------------//
     //   O V E R R I D E S   //
     //-----------------------//
+    // AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,14 +36,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
 
         drawer = new Drawer();
 
+        mapFragment.getMapAsync(drawer);
+
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
+                    .addConnectionCallbacks(drawer)
+                    .addOnConnectionFailedListener(drawer)
                     .addApi(LocationServices.API)
                     .build();
         }
@@ -88,21 +77,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        googleMap.getUiSettings().setZoomControlsEnabled(true);
-        googleMap.getUiSettings().setCompassEnabled(true);
-    }
 
     @Override
     protected void onStart() {
@@ -118,58 +92,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onStop();
     }
 
-    /**
-     * Override for GoogleApiClient.ConnectionCallbacks
-     * @param bundle
-     */
+    //-----------------------//
+    //   O V E R R I D E S   //
+    //-----------------------//
+    // ActivityCompat.OnRequestPermissionsResultCallback
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        Log.d(TAG, "onConnected");
-        //Checks if the permission is already in manifest. Will also request it in 6.0+
-        if (requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            //This should only run for under 6.0
-        }
-
-    }
-
-    protected void stopDrawing() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, drawer.getLocationListener());
-        drawer.setDrawingStatus(false);
-    }
-
-    protected void startDrawing() {
-        try {
-            LocationRequest locationRequest = LocationRequest.create()
-                    .setInterval(10 * 1000)
-                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, drawer.getLocationListener());
-            drawer.setDrawingStatus(true);
-        } catch (SecurityException e) {
-            Log.e(TAG, "Failed to start location updates " + e.getLocalizedMessage());
-        }
-    }
-
-    /**
-     * Override for GoogleApiClient.ConnectionCallbacks
-     * @param connectionResult
-     */
-    @Override
-    public void onConnectionSuspended(int i) {}
-
-    /**
-     * Override for GoogleApiClient.OnConnectionFailedListener
-     * @param connectionResult
-     */
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {}
-
-    /**
-     * Override for ActivityCompat.OnRequestPermissionsResultCallback
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
-     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.d(TAG, "onRequestPermissionResult");
@@ -198,7 +125,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     permission)) {
 
-                // Show an expanation to the user *asynchronously* -- don't block
+                // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
 
@@ -219,6 +146,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         return true;
+    }
+
+    private void stopDrawing() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, drawer.locationListener);
+        drawer.drawing = false;
+    }
+
+    private void startDrawing() {
+        try {
+            LocationRequest locationRequest = LocationRequest.create()
+                    .setInterval(10 * 1000)
+                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, drawer.locationListener);
+            drawer.drawing = true;
+        } catch (SecurityException e) {
+            Log.e(TAG, "Failed to start location updates " + e.getLocalizedMessage());
+        }
     }
 
 //    private void moveToCurrentLocation() {

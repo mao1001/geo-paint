@@ -1,38 +1,73 @@
 package edu.uw.mao1001.geopaint;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 
+import android.Manifest;
 import android.location.Location;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 /**
  * Created by Nick on 5/4/2016.
  */
-public class Drawer {
+public class Drawer implements OnMapReadyCallback,
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String TAG = "Drawer";
 
-    private static CustomLocationListener locationListener;
-
-    private static boolean drawing = false;
+    public static GoogleMap mMap;
+    public CustomLocationListener locationListener;
+    public boolean drawing = false;
 
 
     public Drawer() {
         locationListener = new CustomLocationListener();
     }
 
+    //-----------------------//
+    //   O V E R R I D E S   //
+    //-----------------------//
+    // OnMapReadyCallback
 
-    public LocationListener getLocationListener() {
-        return locationListener;
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        googleMap.getUiSettings().setZoomControlsEnabled(true);
+        googleMap.getUiSettings().setCompassEnabled(true);
     }
 
-    public boolean getDrawingStatus() {
-        return drawing;
+    //-----------------------//
+    //   O V E R R I D E S   //
+    //-----------------------//
+    // GoogleApiClient.ConnectionCallbacks
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, "onConnected");
     }
 
-    public void setDrawingStatus(boolean newStatus) {
-        drawing = newStatus;
-    }
+    @Override
+    public void onConnectionSuspended(int i) {}
+
+    //-----------------------//
+    //   O V E R R I D E S   //
+    //-----------------------//
+    // GoogleApiClient.OnConnectionFailedListener
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {}
+
+
+    //-------------------------//
+    //   I N N E R C L A S S   //
+    //-------------------------//
 
     private static class CustomLocationListener implements LocationListener {
 
