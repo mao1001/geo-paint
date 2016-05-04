@@ -6,16 +6,15 @@ import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,6 +27,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final String TAG = "MapsActivity";
+
+    private static Drawer drawer;
 
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
@@ -46,6 +47,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        drawer = new Drawer();
 
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -104,7 +107,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Checks if the permission is already in manifest. Will also request it in 6.0+
         if (requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
             //This should only run for under 6.0
-            moveToCurrentLocation();
+//            moveToCurrentLocation();
+
+            startLocationUpdates();
+        }
+
+    }
+
+    protected void startLocationUpdates() {
+        try {
+            LocationRequest locationRequest = LocationRequest.create()
+                    .setInterval(10 * 1000)
+                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, drawer.getLocationListener());
+        } catch (SecurityException e) {
+            Log.e(TAG, "Failed to start location updates " + e.getLocalizedMessage());
         }
     }
 
@@ -135,7 +152,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (requestCode) {
             case PERMISSION_REQUEST_FINE_LOCATION: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    moveToCurrentLocation();
+//                    moveToCurrentLocation();
                 } else {
 
                 }
@@ -179,20 +196,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
-    private void moveToCurrentLocation() {
-        Log.d(TAG, "moveToCurrentLocation");
-        try {
-
-            Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            if (mLastLocation != null) {
-
-                Log.d(TAG, "movingToMarker");
-                LatLng userLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(userLocation).title("Your Location"));
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
-            }
-        } catch (SecurityException e) {
-            Log.e(TAG, "Error permission was not granted");
-        }
-    }
+//    private void moveToCurrentLocation() {
+//        Log.d(TAG, "moveToCurrentLocation");
+//        try {
+//
+//            Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+//            if (mLastLocation != null) {
+//
+//                Log.d(TAG, "movingToMarker");
+//                LatLng userLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+//                mMap.addMarker(new MarkerOptions().position(userLocation).title("Your Location"));
+//                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
+//            }
+//        } catch (SecurityException e) {
+//            Log.e(TAG, "Error permission was not granted");
+//        }
+//    }
 }
