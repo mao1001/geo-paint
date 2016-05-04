@@ -1,6 +1,7 @@
 package edu.uw.mao1001.geopaint;
 
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
@@ -13,14 +14,16 @@ import android.view.MenuItem;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final String TAG = "MapsActivity";
 
     private static Drawer drawer;
-    private GoogleApiClient mGoogleApiClient;
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
 
@@ -37,17 +40,9 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
-        drawer = new Drawer();
+        drawer = new Drawer(this);
 
         mapFragment.getMapAsync(drawer);
-
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(drawer)
-                    .addOnConnectionFailedListener(drawer)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -63,12 +58,12 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
 
                 break;
             case "Turn on brush":
-                startDrawing();
+                drawer.startDrawing();
                 item.setTitle(getString(R.string.action_brush_on_title));
                 item.setIcon(R.drawable.ic_smoke_free_white_24dp);
                 break;
             case "Turn off brush":
-                stopDrawing();
+                drawer.stopDrawing();
                 item.setTitle(getString(R.string.action_brush_off_title));
                 item.setIcon(R.drawable.ic_smoking_rooms_white_24dp);
                 break;
@@ -81,14 +76,14 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
     @Override
     protected void onStart() {
         Log.d(TAG, "onStart");
-        mGoogleApiClient.connect();
+        drawer.mGoogleApiClient.connect();
         super.onStart();
     }
 
     @Override
     protected void onStop() {
         Log.d(TAG, "onStop");
-        mGoogleApiClient.disconnect();
+        drawer.mGoogleApiClient.disconnect();
         super.onStop();
     }
 
@@ -147,38 +142,4 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
 
         return true;
     }
-
-    private void stopDrawing() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, drawer.locationListener);
-        drawer.drawing = false;
-    }
-
-    private void startDrawing() {
-        try {
-            LocationRequest locationRequest = LocationRequest.create()
-                    .setInterval(10 * 1000)
-                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, drawer.locationListener);
-            drawer.drawing = true;
-        } catch (SecurityException e) {
-            Log.e(TAG, "Failed to start location updates " + e.getLocalizedMessage());
-        }
-    }
-
-//    private void moveToCurrentLocation() {
-//        Log.d(TAG, "moveToCurrentLocation");
-//        try {
-//
-//            Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-//            if (mLastLocation != null) {
-//
-//                Log.d(TAG, "movingToMarker");
-//                LatLng userLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-//                mMap.addMarker(new MarkerOptions().position(userLocation).title("Your Location"));
-//                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
-//            }
-//        } catch (SecurityException e) {
-//            Log.e(TAG, "Error permission was not granted");
-//        }
-//    }
 }
