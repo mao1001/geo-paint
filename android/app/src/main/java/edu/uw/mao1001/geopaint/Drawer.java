@@ -15,14 +15,12 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -32,6 +30,8 @@ import java.util.List;
 
 /**
  * Created by Nick on 5/4/2016.
+ *
+ * Class to handle drawing lines on a map.
  */
 public class Drawer implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
@@ -46,12 +46,12 @@ public class Drawer implements OnMapReadyCallback,
     public Drawing currentDrawing;
     public int currentColor;
 
-
     public Drawer(Context context) {
         this.context = context;
         this.currentDrawing = new Drawing();
         this.currentColor = R.color.white;
 
+        //Starts the api client
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(context)
                     .addConnectionCallbacks(this)
@@ -64,12 +64,19 @@ public class Drawer implements OnMapReadyCallback,
     //---------------------------------//
     //   P U B L I C   M E T H O D S   //
     //---------------------------------//
+
+    /**
+     * Stops the current drawing and stop listening for location updates.
+     */
     public void stopDrawing() {
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         isDrawing = false;
         currentDrawing.endLine();
     }
 
+    /**
+     * Starts drawing by firing a recurring location request.
+     */
     public void startDrawing() {
         try {
             LocationRequest locationRequest = LocationRequest.create()
@@ -82,6 +89,10 @@ public class Drawer implements OnMapReadyCallback,
         }
     }
 
+    /**
+     * Saves the current drawing
+     * @return File that represents the current drawing. File is in .geojson format.
+     */
     public File saveDrawing() {
         stopDrawing();
         GeoJsonConverter converter = new GeoJsonConverter();
@@ -103,6 +114,10 @@ public class Drawer implements OnMapReadyCallback,
         return file;
     }
 
+    /**
+     * Shares the current drawing by first ending and saving the drawing.
+     * @param shareActionProvider
+     */
     public void shareDrawing(ShareActionProvider shareActionProvider) {
         File savedFile = saveDrawing();
 
@@ -122,6 +137,8 @@ public class Drawer implements OnMapReadyCallback,
     public void onMapReady(GoogleMap googleMap) {
         Log.v(TAG, "onMapReady");
         mMap = googleMap;
+
+        //Sets zoom and compass controls
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setCompassEnabled(true);
     }
@@ -149,7 +166,6 @@ public class Drawer implements OnMapReadyCallback,
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {}
 
-
     //-----------------------//
     //   O V E R R I D E S   //
     //-----------------------//
@@ -159,10 +175,10 @@ public class Drawer implements OnMapReadyCallback,
     public void onLocationChanged(Location location) {
         //Log.i(TAG, "New Location: " + location.getLatitude() + " " + location.getLongitude());
         if (isDrawing) {
+            //We are drawing so add a point and move the camera accordingly
             currentDrawing.addPoint(new LatLng(location.getLatitude(), location.getLongitude()), currentColor);
-
             LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 20));
         }
     }
 
@@ -170,6 +186,9 @@ public class Drawer implements OnMapReadyCallback,
     //   I N N E R C L A S S   //
     //-------------------------//
 
+    /**
+     * Private inner class to handle drawings
+     */
     private static class Drawing {
         private List<Polyline> lines;
         private Polyline currentLine;
@@ -179,6 +198,12 @@ public class Drawer implements OnMapReadyCallback,
             currentLine = null;
         }
 
+        /**
+         * Adds a point to the current line being drawn.
+         * If there is no line, a new line will be started.
+         * @param point : The point being passed added.
+         * @param color : The color to which the point should be.
+         */
         public void addPoint(LatLng point, int color) {
             if (currentLine == null) {
                 PolylineOptions options = new PolylineOptions()
@@ -192,6 +217,9 @@ public class Drawer implements OnMapReadyCallback,
             }
         }
 
+        /**
+         * Ends the current line.
+         */
         public void endLine() {
             if (currentLine != null) {
                 lines.add(currentLine);
@@ -199,6 +227,10 @@ public class Drawer implements OnMapReadyCallback,
             }
         }
 
+        /**
+         * Gets all the lines for this drawing.
+         * @return : A list of lines that represent the drawing
+         */
         public List<Polyline> getAllLines() {
             return lines;
         }

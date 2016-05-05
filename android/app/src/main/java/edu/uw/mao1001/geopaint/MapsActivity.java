@@ -45,15 +45,6 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
         }
     }
 
-    private void setup() {
-        //Log.d(TAG, "Running setup");
-        drawer = new Drawer(this);
-        mapFragment.setRetainInstance(true);
-        mapFragment.getMapAsync(drawer);
-
-        drawer.mGoogleApiClient.connect();
-    }
-
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_menu, menu);
@@ -67,11 +58,13 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
                 showColorPickerDialog();
                 break;
             case "Turn on brush":
+                //Start drawing and toggle icon and title
                 drawer.startDrawing();
                 item.setTitle(getString(R.string.action_brush_on_title));
                 item.setIcon(R.drawable.ic_smoke_free_white_24dp);
                 break;
             case "Turn off brush":
+                //Start drawing and toggle icon and title
                 drawer.stopDrawing();
                 item.setTitle(getString(R.string.action_brush_off_title));
                 item.setIcon(R.drawable.ic_smoking_rooms_white_24dp);
@@ -87,7 +80,6 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
 
         return super.onOptionsItemSelected(item);
     }
-
 
     @Override
     protected void onStart() {
@@ -127,25 +119,11 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
     //   P R I V A T E   M E T H O D S   //
     //-----------------------------------//
 
-    private void showColorPickerDialog() {
-        new SpectrumDialog.Builder(this)
-            .setColors(R.array.colors)
-            .setSelectedColor(R.color.white)
-            .setDismissOnColorSelected(false)
-            .setOutlineWidth(2)
-            .setOnColorSelectedListener(new SpectrumDialog.OnColorSelectedListener() {
-                @Override
-                public void onColorSelected(boolean positiveResult, @ColorInt int color) {
-                    if (positiveResult) {
-                        drawer.currentColor = color;
-                    }
-
-                    //Log.i(TAG, "Color picker: " +  Integer.toHexString(color));
-                }
-            }).build().show(getSupportFragmentManager(), "color_picker_dialog");
-
-    }
-
+    /**
+     * Requests permission from the user. Only runs for Marshmellow 6.0+
+     * @param permission Permission to be asked for.
+     * @return True if permission is already granted in the manifest otherwise false and asks for permission
+     */
     private boolean requestPermission(String permission) {
         if (ContextCompat.checkSelfPermission(this,
                 permission)
@@ -165,5 +143,40 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
         }
 
         return true;
+    }
+
+    /**
+     * Private helper that initiates alot of the helper calls that
+     * need to wait until the the map or other callbacks are finished first.
+     */
+    private void setup() {
+        //Log.d(TAG, "Running setup");
+        drawer = new Drawer(this);
+        mapFragment.setRetainInstance(true);
+        mapFragment.getMapAsync(drawer);
+
+        drawer.mGoogleApiClient.connect();
+    }
+
+    /**
+     * Shows a picker dialog that allows the user to pick a color to draw with
+     */
+    private void showColorPickerDialog() {
+        new SpectrumDialog.Builder(this)
+            .setColors(R.array.colors)
+            .setSelectedColor(R.color.white)
+            .setDismissOnColorSelected(false)
+            .setOutlineWidth(2)
+            .setOnColorSelectedListener(new SpectrumDialog.OnColorSelectedListener() {
+                @Override
+                public void onColorSelected(boolean positiveResult, @ColorInt int color) {
+                    if (positiveResult) {
+                        drawer.currentColor = color;
+                    }
+
+                    //Log.i(TAG, "Color picker: " +  Integer.toHexString(color));
+                }
+            }).build().show(getSupportFragmentManager(), "color_picker_dialog");
+
     }
 }
