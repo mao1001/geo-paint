@@ -61,6 +61,9 @@ public class Drawer implements OnMapReadyCallback,
         }
     }
 
+    //---------------------------------//
+    //   P U B L I C   M E T H O D S   //
+    //---------------------------------//
     public void stopDrawing() {
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         isDrawing = false;
@@ -82,7 +85,6 @@ public class Drawer implements OnMapReadyCallback,
     public File saveDrawing() {
         stopDrawing();
         GeoJsonConverter converter = new GeoJsonConverter();
-        Log.d(TAG, "" + currentDrawing.getAllLines().size());
         String string = converter.convertToGeoJson(currentDrawing.getAllLines());
 
         File file = new File(context.getExternalFilesDir(null), "drawing.geojson");
@@ -90,7 +92,7 @@ public class Drawer implements OnMapReadyCallback,
             FileOutputStream outputStream = new FileOutputStream(file);
             outputStream.write(string.getBytes()); //write the string to the file
             outputStream.close(); //close the stream
-            Log.d(TAG, string);
+            //Log.d(TAG, string);
         } catch (FileNotFoundException e) {
             Log.e(TAG, "FileNotFoundException");
         } catch (IOException e) {
@@ -132,12 +134,6 @@ public class Drawer implements OnMapReadyCallback,
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(TAG, "onConnected");
-//        try {
-//            Log.d(TAG, "Attempting to move to user");
-//
-//        } catch (SecurityException e) {
-//            Log.e(TAG, "Error permission was not granted");
-//        }
     }
 
     @Override
@@ -161,7 +157,7 @@ public class Drawer implements OnMapReadyCallback,
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.v(TAG, "New Location: " + location.getLatitude() + " " + location.getLongitude());
+        //Log.i(TAG, "New Location: " + location.getLatitude() + " " + location.getLongitude());
         if (isDrawing) {
             currentDrawing.addPoint(new LatLng(location.getLatitude(), location.getLongitude()), currentColor);
 
@@ -204,7 +200,6 @@ public class Drawer implements OnMapReadyCallback,
         }
 
         public List<Polyline> getAllLines() {
-            Log.d(TAG, "Getting all lines:" + lines.size());
             return lines;
         }
     }
