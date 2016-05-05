@@ -1,10 +1,10 @@
 <resources>
     <string name="app_name">Geopaint</string>
-    <string name="title_activity_maps">Map</string>
-
+    <string name="title_activity_maps">GeoPaint</string>
 
     <string name="action_pick_color">Pick color</string>
     <string name="action_brush_off_title">Turn on brush</string>
     <string name="action_brush_on_title">Turn off brush</string>
     <string name="action_save_drawing">Save drawing</string>
+    <string name="action_share_drawing">Share drawing</string>
 </resources>

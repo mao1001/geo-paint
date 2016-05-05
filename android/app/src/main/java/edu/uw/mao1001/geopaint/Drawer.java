@@ -14,13 +14,19 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +40,7 @@ public class Drawer implements OnMapReadyCallback,
 
     public static GoogleMap mMap;
     public GoogleApiClient mGoogleApiClient;
+    public Context context;
 
     public boolean isDrawing = false;
     public Drawing currentDrawing;
@@ -41,8 +48,9 @@ public class Drawer implements OnMapReadyCallback,
 
 
     public Drawer(Context context) {
-        currentDrawing = new Drawing();
-        currentColor = Color.BLACK;
+        this.context = context;
+        this.currentDrawing = new Drawing();
+        this.currentColor = R.color.white;
 
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(context)
@@ -71,9 +79,36 @@ public class Drawer implements OnMapReadyCallback,
         }
     }
 
-    public void saveDrawing() {
-        GeoJsonConverter test = new GeoJsonConverter();
-        test.convertToGeoJson(currentDrawing.getAllLines());
+    public File saveDrawing() {
+        stopDrawing();
+        GeoJsonConverter converter = new GeoJsonConverter();
+        Log.d(TAG, "" + currentDrawing.getAllLines().size());
+        String string = converter.convertToGeoJson(currentDrawing.getAllLines());
+
+        File file = new File(context.getExternalFilesDir(null), "drawing.geojson");
+        try {
+            FileOutputStream outputStream = new FileOutputStream(file);
+            outputStream.write(string.getBytes()); //write the string to the file
+            outputStream.close(); //close the stream
+            Log.d(TAG, string);
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, "FileNotFoundException");
+        } catch (IOException e) {
+            Log.e(TAG, "IOException");
+
+        }
+
+        return file;
+    }
+
+    public void shareDrawing(ShareActionProvider shareActionProvider) {
+        File savedFile = saveDrawing();
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_STREAM, savedFile.toURI());
+
+        shareActionProvider.setShareIntent(intent);
     }
 
     //-----------------------//
@@ -162,11 +197,14 @@ public class Drawer implements OnMapReadyCallback,
         }
 
         public void endLine() {
-            lines.add(currentLine);
-            currentLine = null;
+            if (currentLine != null) {
+                lines.add(currentLine);
+                currentLine = null;
+            }
         }
 
         public List<Polyline> getAllLines() {
+            Log.d(TAG, "Getting all lines:" + lines.size());
             return lines;
         }
     }

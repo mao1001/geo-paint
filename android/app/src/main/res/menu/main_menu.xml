@@ -19,4 +19,9 @@
         android:icon="@drawable/ic_save_white_24dp"
         android:title="@string/action_save_drawing"
         app:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/action_share"
+        android:title="@string/action_share_drawing"
+        app:showAsAction="ifRoom"
+        app:actionProviderClass="android.support.v7.widget.ShareActionProvider"/>
 </menu>

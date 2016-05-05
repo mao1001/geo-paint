@@ -1,24 +1,22 @@
 package edu.uw.mao1001.geopaint;
 
 import android.Manifest;
+import android.app.DialogFragment;
 import android.content.pm.PackageManager;
-import android.location.Location;
+import android.graphics.Color;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.thebluealliance.spectrum.SpectrumDialog;
 
 public class MapsActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
@@ -26,6 +24,8 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
     private static final String TAG = "MapsActivity";
 
     private static Drawer drawer;
+
+    private static SpectrumDialog colorPicker;
 
     private static SupportMapFragment mapFragment;
 
@@ -44,6 +44,7 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
+        colorPicker = buildColorPicker();
 
         if (requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
             setup();
@@ -69,7 +70,7 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getTitle().toString()) {
             case "Pick color":
-                showColorPicker();
+                colorPicker.show(getSupportFragmentManager(), "color_picker_dialog");
                 break;
             case "Turn on brush":
                 drawer.startDrawing();
@@ -82,8 +83,12 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
                 item.setTitle(getString(R.string.action_brush_off_title));
                 item.setIcon(R.drawable.ic_smoking_rooms_white_24dp);
                 break;
-            case "Saving drawing":
+            case "Save drawing":
                 drawer.saveDrawing();
+                break;
+            case "Share drawing":
+                ShareActionProvider mySharedProvider = (ShareActionProvider)MenuItemCompat.getActionProvider(item);
+                drawer.shareDrawing(mySharedProvider);
                 break;
         }
 
@@ -129,8 +134,8 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
     //   P R I V A T E   M E T H O D S   //
     //-----------------------------------//
 
-    private void showColorPicker() {
-        new SpectrumDialog.Builder(this)
+    private SpectrumDialog buildColorPicker() {
+        return new SpectrumDialog.Builder(this)
                 .setColors(R.array.colors)
                 .setSelectedColorRes(R.color.white)
                 .setDismissOnColorSelected(true)
@@ -138,9 +143,13 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
                 .setOnColorSelectedListener(new SpectrumDialog.OnColorSelectedListener() {
                     @Override
                     public void onColorSelected(boolean positiveResult, @ColorInt int color) {
-                        Log.v(TAG, "Color picker: " +  color);
+                        if (positiveResult) {
+                            drawer.currentColor = color;
+                        }
+
+                        Log.i(TAG, "Color picker: " +  color);
                     }
-                }).build().show(getSupportFragmentManager(), "color_picker_dialog");
+                }).build();
 
     }
 
@@ -149,23 +158,14 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
                 permission)
                 != PackageManager.PERMISSION_GRANTED) {
 
-            // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     permission)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
+                // Should we show an explanation?
             } else {
                 Log.d(TAG, "Requesting Permission");
                 ActivityCompat.requestPermissions(this,
                         new String[]{permission},
                         PERMISSION_REQUEST_FINE_LOCATION);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
             }
 
             return false;

@@ -4,9 +4,16 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
-
     <array name="colors">
         <item>#000000</item>
+        <item>#ff0000</item>
+        <item>#ff8000</item>
+        <item>#ffff00</item>
+        <item>#00ff00</item>
+        <item>#00ffff</item>
+        <item>#0040ff</item>
+        <item>#8000ff</item>
+        <item>#ff00ff</item>
         <item>#ffffff</item>
     </array>
 </resources>
