@@ -13,4 +13,10 @@
         android:icon="@drawable/ic_palette_white_24dp"
         android:title="@string/action_pick_color"
         app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_save_drawing"
+        android:icon="@drawable/ic_save_white_24dp"
+        android:title="@string/action_save_drawing"
+        app:showAsAction="ifRoom"/>
 </menu>

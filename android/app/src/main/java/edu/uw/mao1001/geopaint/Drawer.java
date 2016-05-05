@@ -14,6 +14,7 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -36,10 +37,12 @@ public class Drawer implements OnMapReadyCallback,
 
     public boolean isDrawing = false;
     public Drawing currentDrawing;
+    public int currentColor;
 
 
     public Drawer(Context context) {
         currentDrawing = new Drawing();
+        currentColor = Color.BLACK;
 
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(context)
@@ -68,6 +71,11 @@ public class Drawer implements OnMapReadyCallback,
         }
     }
 
+    public void saveDrawing() {
+        GeoJsonConverter test = new GeoJsonConverter();
+        test.convertToGeoJson(currentDrawing.getAllLines());
+    }
+
     //-----------------------//
     //   O V E R R I D E S   //
     //-----------------------//
@@ -75,22 +83,10 @@ public class Drawer implements OnMapReadyCallback,
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        Log.v(TAG, "onMapReady");
         mMap = googleMap;
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setCompassEnabled(true);
-
-        try {
-            Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            if (mLastLocation != null) {
-
-                Log.d(TAG, "movingToMarker");
-                LatLng userLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(userLocation).title("Your Location"));
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
-            }
-        } catch (SecurityException e) {
-            Log.e(TAG, "Error permission was not granted");
-        }
     }
 
     //-----------------------//
@@ -101,6 +97,12 @@ public class Drawer implements OnMapReadyCallback,
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(TAG, "onConnected");
+//        try {
+//            Log.d(TAG, "Attempting to move to user");
+//
+//        } catch (SecurityException e) {
+//            Log.e(TAG, "Error permission was not granted");
+//        }
     }
 
     @Override
@@ -126,7 +128,10 @@ public class Drawer implements OnMapReadyCallback,
     public void onLocationChanged(Location location) {
         Log.v(TAG, "New Location: " + location.getLatitude() + " " + location.getLongitude());
         if (isDrawing) {
-            currentDrawing.addPoint(new LatLng(location.getLatitude(), location.getLongitude()));
+            currentDrawing.addPoint(new LatLng(location.getLatitude(), location.getLongitude()), currentColor);
+
+            LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
         }
     }
 
@@ -135,18 +140,19 @@ public class Drawer implements OnMapReadyCallback,
     //-------------------------//
 
     private static class Drawing {
-        ArrayList<Polyline> lines;
-        Polyline currentLine;
+        private List<Polyline> lines;
+        private Polyline currentLine;
 
         public Drawing() {
             lines = new ArrayList<>();
             currentLine = null;
         }
 
-        public void addPoint(LatLng point) {
+        public void addPoint(LatLng point, int color) {
             if (currentLine == null) {
                 PolylineOptions options = new PolylineOptions()
-                        .add(point);
+                        .add(point)
+                        .color(color);
                 currentLine = mMap.addPolyline(options);
             } else {
                 List<LatLng> allPoints = currentLine.getPoints();
@@ -158,6 +164,10 @@ public class Drawer implements OnMapReadyCallback,
         public void endLine() {
             lines.add(currentLine);
             currentLine = null;
+        }
+
+        public List<Polyline> getAllLines() {
+            return lines;
         }
     }
 }

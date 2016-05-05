@@ -1,3 +1,5 @@
+package edu.uw.mao1001.geopaint;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import java.util.List;

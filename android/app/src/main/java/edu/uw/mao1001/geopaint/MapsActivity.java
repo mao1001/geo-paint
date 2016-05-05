@@ -1,7 +1,9 @@
 package edu.uw.mao1001.geopaint;
 
+import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
@@ -11,19 +13,21 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationRequest;
+
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.thebluealliance.spectrum.SpectrumDialog;
 
 public class MapsActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final String TAG = "MapsActivity";
 
     private static Drawer drawer;
+
+    private static SupportMapFragment mapFragment;
 
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
 
@@ -37,12 +41,22 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
-        drawer = new Drawer(this);
 
+        if (requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            setup();
+        }
+    }
+
+    private void setup() {
+        Log.d(TAG, "Running setup");
+        drawer = new Drawer(this);
+        mapFragment.setRetainInstance(true);
         mapFragment.getMapAsync(drawer);
+
+        drawer.mGoogleApiClient.connect();
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -55,10 +69,11 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getTitle().toString()) {
             case "Pick color":
-
+                showColorPicker();
                 break;
             case "Turn on brush":
                 drawer.startDrawing();
+
                 item.setTitle(getString(R.string.action_brush_on_title));
                 item.setIcon(R.drawable.ic_smoke_free_white_24dp);
                 break;
@@ -66,6 +81,9 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
                 drawer.stopDrawing();
                 item.setTitle(getString(R.string.action_brush_off_title));
                 item.setIcon(R.drawable.ic_smoking_rooms_white_24dp);
+                break;
+            case "Saving drawing":
+                drawer.saveDrawing();
                 break;
         }
 
@@ -76,7 +94,6 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
     @Override
     protected void onStart() {
         Log.d(TAG, "onStart");
-        drawer.mGoogleApiClient.connect();
         super.onStart();
     }
 
@@ -99,9 +116,10 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
         switch (requestCode) {
             case PERMISSION_REQUEST_FINE_LOCATION: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                    moveToCurrentLocation();
+                    Log.d(TAG, "About to run setup");
+                    setup();
                 } else {
-
+                    finish();
                 }
             }
         }
@@ -110,6 +128,21 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
     //-----------------------------------//
     //   P R I V A T E   M E T H O D S   //
     //-----------------------------------//
+
+    private void showColorPicker() {
+        new SpectrumDialog.Builder(this)
+                .setColors(R.array.colors)
+                .setSelectedColorRes(R.color.white)
+                .setDismissOnColorSelected(true)
+                .setOutlineWidth(2)
+                .setOnColorSelectedListener(new SpectrumDialog.OnColorSelectedListener() {
+                    @Override
+                    public void onColorSelected(boolean positiveResult, @ColorInt int color) {
+                        Log.v(TAG, "Color picker: " +  color);
+                    }
+                }).build().show(getSupportFragmentManager(), "color_picker_dialog");
+
+    }
 
     private boolean requestPermission(String permission) {
         if (ContextCompat.checkSelfPermission(this,
@@ -125,9 +158,7 @@ public class MapsActivity extends AppCompatActivity implements ActivityCompat.On
                 // sees the explanation, try again to request the permission.
 
             } else {
-
-                // No explanation needed, we can request the permission.
-
+                Log.d(TAG, "Requesting Permission");
                 ActivityCompat.requestPermissions(this,
                         new String[]{permission},
                         PERMISSION_REQUEST_FINE_LOCATION);

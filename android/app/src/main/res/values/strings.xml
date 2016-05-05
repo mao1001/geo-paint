@@ -6,4 +6,5 @@
     <string name="action_pick_color">Pick color</string>
     <string name="action_brush_off_title">Turn on brush</string>
     <string name="action_brush_on_title">Turn off brush</string>
+    <string name="action_save_drawing">Save drawing</string>
 </resources>
